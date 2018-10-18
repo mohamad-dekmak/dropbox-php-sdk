@@ -231,9 +231,9 @@ class DropboxAuthHelper
      *
      * @return void
      */
-    public function revokeAccessToken()
+    public function revokeAccessToken(array $headers = [])
     {
-        $this->getOAuth2Client()->revokeAccessToken();
+        $this->getOAuth2Client()->revokeAccessToken($headers);
     }
 
     /**

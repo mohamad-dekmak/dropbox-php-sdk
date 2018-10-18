@@ -210,7 +210,7 @@ class Dropbox
      * @link https://www.dropbox.com/developers/documentation/http/documentation#files-get_metadata
      *
      */
-    public function getMetadata($path, array $params = [])
+    public function getMetadata($path, array $params = [], array $headers = [])
     {
         //Root folder is unsupported
         if ($path === '/') {
@@ -221,7 +221,7 @@ class Dropbox
         $params['path'] = $path;
 
         //Get File Metadata
-        $response = $this->postToAPI('/files/get_metadata', $params);
+        $response = $this->postToAPI('/files/get_metadata', $params, null, $headers);
 
         //Make and Return the Model
         return $this->makeModelFromResponse($response);
@@ -236,9 +236,9 @@ class Dropbox
      *
      * @return \Kunnu\Dropbox\DropboxResponse
      */
-    public function postToAPI($endpoint, array $params = [], $accessToken = null)
+    public function postToAPI($endpoint, array $params = [], $accessToken = null, array $headers = [])
     {
-        return $this->sendRequest("POST", $endpoint, 'api', $params, $accessToken);
+        return $this->sendRequest("POST", $endpoint, 'api', $params, $accessToken, null, $headers);
     }
 
     /**
@@ -255,13 +255,13 @@ class Dropbox
      *
      * @throws \Kunnu\Dropbox\Exceptions\DropboxClientException
      */
-    public function sendRequest($method, $endpoint, $endpointType = 'api', array $params = [], $accessToken = null, DropboxFile $responseFile = null)
+    public function sendRequest($method, $endpoint, $endpointType = 'api', array $params = [], $accessToken = null, DropboxFile $responseFile = null, array $headers = [])
     {
         //Access Token
         $accessToken = $this->getAccessToken() ? $this->getAccessToken() : $accessToken;
 
         //Make a DropboxRequest object
-        $request = new DropboxRequest($method, $endpoint, $accessToken, $endpointType, $params);
+        $request = new DropboxRequest($method, $endpoint, $accessToken, $endpointType, $params, $headers);
 
         //Make a DropboxResponse object if a response should be saved to the file
         $response = $responseFile ? new DropboxResponseToFile($request, $responseFile) : null;
@@ -327,7 +327,7 @@ class Dropbox
      *
      * @return \Kunnu\Dropbox\Models\MetadataCollection
      */
-    public function listFolder($path = null, array $params = [])
+    public function listFolder($path = null, array $params = [], array $headers = [])
     {
         //Specify the root folder as an
         //empty string rather than as "/"
@@ -339,7 +339,7 @@ class Dropbox
         $params['path'] = $path;
 
         //Get File Metadata
-        $response = $this->postToAPI('/files/list_folder', $params);
+        $response = $this->postToAPI('/files/list_folder', $params, null, $headers);
 
         //Make and Return the Model
         return $this->makeModelFromResponse($response);
@@ -450,7 +450,7 @@ class Dropbox
      *
      * @return \Kunnu\Dropbox\Models\SearchResults
      */
-    public function search($path, $query, array $params = [])
+    public function search($path, $query, array $params = [], array $headers = [])
     {
         //Specify the root folder as an
         //empty string rather than as "/"
@@ -463,7 +463,7 @@ class Dropbox
         $params['query'] = $query;
 
         //Fetch Search Results
-        $response = $this->postToAPI('/files/search', $params);
+        $response = $this->postToAPI('/files/search', $params, null, $headers);
 
         //Make and Return the Model
         return $this->makeModelFromResponse($response);
@@ -482,7 +482,7 @@ class Dropbox
      * @link https://www.dropbox.com/developers/documentation/http/documentation#files-create_folder
      *
      */
-    public function createFolder($path, $autorename = false)
+    public function createFolder($path, $autorename = false, array $headers = [])
     {
         //Path cannot be null
         if (is_null($path)) {
@@ -490,7 +490,7 @@ class Dropbox
         }
 
         //Create Folder
-        $response = $this->postToAPI('/files/create_folder', ['path' => $path, 'autorename' => $autorename]);
+        $response = $this->postToAPI('/files/create_folder', ['path' => $path, 'autorename' => $autorename], null, $headers);
 
         //Fetch the Metadata
         $body = $response->getDecodedBody();
@@ -511,7 +511,7 @@ class Dropbox
      * @link https://www.dropbox.com/developers/documentation/http/documentation#files-delete
      *
      */
-    public function delete($path)
+    public function delete($path, array $headers = [])
     {
         //Path cannot be null
         if (is_null($path)) {
@@ -519,13 +519,13 @@ class Dropbox
         }
 
         //Delete
-        $response = $this->postToAPI('/files/delete_v2', ['path' => $path]);
+        $response = $this->postToAPI('/files/delete_v2', ['path' => $path], null, $headers);
         $body = $response->getDecodedBody();
 
         //Response doesn't have Metadata
         if (!isset($body['metadata']) || !is_array($body['metadata'])) {
             throw new DropboxClientException("Invalid Response.");
-        }
+    }
 
         return new DeletedMetadata($body['metadata']);
     }
@@ -543,7 +543,7 @@ class Dropbox
      * @link https://www.dropbox.com/developers/documentation/http/documentation#files-move
      *
      */
-    public function move($fromPath, $toPath)
+    public function move($fromPath, $toPath, array $headers = [])
     {
         //From and To paths cannot be null
         if (is_null($fromPath) || is_null($toPath)) {
@@ -551,7 +551,7 @@ class Dropbox
         }
 
         //Response
-        $response = $this->postToAPI('/files/move', ['from_path' => $fromPath, 'to_path' => $toPath]);
+        $response = $this->postToAPI('/files/move', ['from_path' => $fromPath, 'to_path' => $toPath], null, $headers);
 
         //Make and Return the Model
         return $this->makeModelFromResponse($response);
@@ -777,7 +777,7 @@ class Dropbox
      *
      * @return \Kunnu\Dropbox\Models\FileMetadata
      */
-    public function upload($dropboxFile, $path, array $params = [])
+    public function upload($dropboxFile, $path, array $params = [], array $headers = [])
     {
         //Make Dropbox File
         $dropboxFile = $this->makeDropboxFile($dropboxFile);
@@ -789,7 +789,7 @@ class Dropbox
         }
 
         //Simple file upload
-        return $this->simpleUpload($dropboxFile, $path, $params);
+        return $this->simpleUpload($dropboxFile, $path, $params, $headers);
     }
 
     /**
@@ -939,9 +939,9 @@ class Dropbox
      *
      * @return \Kunnu\Dropbox\DropboxResponse
      */
-    public function postToContent($endpoint, array $params = [], $accessToken = null, DropboxFile $responseFile = null)
+    public function postToContent($endpoint, array $params = [], $accessToken = null, DropboxFile $responseFile = null, array $headers = [])
     {
-        return $this->sendRequest("POST", $endpoint, 'content', $params, $accessToken, $responseFile);
+        return $this->sendRequest("POST", $endpoint, 'content', $params, $accessToken, $responseFile, $headers);
     }
 
     /**
@@ -1052,7 +1052,7 @@ class Dropbox
      *
      * @return \Kunnu\Dropbox\Models\FileMetadata
      */
-    public function simpleUpload($dropboxFile, $path, array $params = [])
+    public function simpleUpload($dropboxFile, $path, array $params = [], array $headers = [])
     {
         //Make Dropbox File
         $dropboxFile = $this->makeDropboxFile($dropboxFile);
@@ -1062,7 +1062,7 @@ class Dropbox
         $params['file'] = $dropboxFile;
 
         //Upload File
-        $file = $this->postToContent('/files/upload', $params);
+        $file = $this->postToContent('/files/upload', $params, null, null, $headers);
         $body = $file->getDecodedBody();
 
         //Make and Return the Model
@@ -1180,7 +1180,7 @@ class Dropbox
      * @link https://www.dropbox.com/developers/documentation/http/documentation#files-download
      *
      */
-    public function download($path, $dropboxFile = null)
+    public function download($path, $dropboxFile = null, array $headers = [])
     {
         //Path cannot be null
         if (is_null($path)) {
@@ -1191,7 +1191,7 @@ class Dropbox
         $dropboxFile = $dropboxFile ? $this->makeDropboxFile($dropboxFile, null, null, DropboxFile::MODE_WRITE) : null;
 
         //Download File
-        $response = $this->postToContent('/files/download', ['path' => $path], null, $dropboxFile);
+        $response = $this->postToContent('/files/download', ['path' => $path], null, $dropboxFile, $headers);
 
         //Get file metadata from response headers
         $metadata = $this->getMetadataFromResponseHeaders($response);
@@ -1275,7 +1275,7 @@ class Dropbox
         return $body;
     }
     
-     /**
+    /**
      * Get Authenticated Admin
      *
      * @link https://www.dropbox.com/developers/documentation/http/teams#team-token-get_authenticated_admin

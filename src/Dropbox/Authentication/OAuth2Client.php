@@ -166,13 +166,13 @@ class OAuth2Client
      *
      * @return void
      */
-    public function revokeAccessToken()
+    public function revokeAccessToken(array $headers = [])
     {
         //Access Token
         $accessToken = $this->getApp()->getAccessToken();
 
         //Request
-        $request = new DropboxRequest("POST", "/auth/token/revoke", $accessToken);
+        $request = new DropboxRequest("POST", "/auth/token/revoke", $accessToken, "api", [], $headers);
         // Do not validate the response
         // since the /token/revoke endpoint
         // doesn't return anything in the response.
