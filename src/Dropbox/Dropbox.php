@@ -1274,4 +1274,20 @@ class Dropbox
         //Return the decoded body
         return $body;
     }
+    
+     /**
+     * Get Authenticated Admin
+     *
+     * @link https://www.dropbox.com/developers/documentation/http/teams#team-token-get_authenticated_admin
+     *
+     * @return array
+     */
+    public function getAuthenticatedAdmin()
+    {
+        $response = $this->postToAPI('/team/token/get_authenticated_admin', []);
+        $body = $response->getDecodedBody();
+
+        //Return the decoded body
+        return $body;
+    }
 }
